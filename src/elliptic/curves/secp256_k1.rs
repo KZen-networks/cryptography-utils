@@ -120,6 +120,10 @@ impl ECScalar for Secp256k1Scalar {
     }
 
     fn from(n: &BigInt) -> Secp256k1Scalar {
+        if n.eq(&BigInt::zero()) {
+            return Self::zero();
+        }
+
         let curve_order = FE::q();
         let n_reduced = BigInt::mod_add(n, &BigInt::from(0), &curve_order);
         let mut v = BigInt::to_bytes(&n_reduced);
@@ -664,10 +668,13 @@ mod tests {
     #[test]
     fn deserialize_sk() {
         let s = "\"1e240\"";
-        let dummy: Secp256k1Scalar = serde_json::from_str(s).expect("Failed in serialization");
-
+        let dummy: Secp256k1Scalar = serde_json::from_str(s).expect("Failed in deserialization");
         let sk: Secp256k1Scalar = ECScalar::from(&BigInt::from(123456));
+        assert_eq!(dummy, sk);
 
+        let s = "\"0\"";
+        let dummy: Secp256k1Scalar = serde_json::from_str(s).expect("Failed in deserialization");
+        let sk: Secp256k1Scalar = ECScalar::zero();
         assert_eq!(dummy, sk);
     }
 
